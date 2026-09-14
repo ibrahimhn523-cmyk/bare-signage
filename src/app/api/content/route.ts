@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/session";
 import {
   readActiveContentIndex,
-  readContentIndex,
-  writeContentIndex,
+  addContentItem,
   validateItem,
   ContentValidationError,
-  type ContentItem,
   type ContentItemType,
 } from "@/lib/content-store";
+
+// لا تُخزَّن استجابة هذا المسار مؤقتًا — يقرأ حالة المحتوى الحيّة على كل طلب.
+export const dynamic = "force-dynamic";
 
 // عام — بدون تسجيل دخول. تستخدمه صفحة العرض. يُرجِع العناصر المفعّلة فقط.
 export async function GET() {
@@ -43,19 +44,6 @@ export async function POST(request: NextRequest) {
     throw err;
   }
 
-  const newItem: ContentItem = {
-    id: crypto.randomUUID(),
-    type,
-    title,
-    url,
-    duration_seconds,
-    is_active: true,
-    created_at: new Date().toISOString(),
-  };
-
-  const items = await readContentIndex();
-  items.push(newItem);
-  await writeContentIndex(items);
-
-  return NextResponse.json({ item: newItem }, { status: 201 });
+  const item = await addContentItem({ type, title, url, duration_seconds });
+  return NextResponse.json({ item }, { status: 201 });
 }
