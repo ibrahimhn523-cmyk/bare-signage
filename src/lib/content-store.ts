@@ -85,7 +85,9 @@ async function findIndexBlobUrl(): Promise<string | null> {
 export async function readContentIndex(): Promise<ContentItem[]> {
   const url = await findIndexBlobUrl();
   if (!url) return [];
-  const res = await fetch(url, { cache: "no-store" });
+  // كسر تخزين Vercel CDN المؤقت صراحة (query param فريد) — نعتمد على هذا الملف
+  // في نمط "اقرأ-عدّل-اكتب" على كل طلب كتابة، فأي نسخة قديمة مخبأة تعني فقدان تعديل.
+  const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) return [];
   return (await res.json()) as ContentItem[];
 }
@@ -101,6 +103,9 @@ export async function writeContentIndex(items: ContentItem[]): Promise<void> {
     contentType: "application/json",
     addRandomSuffix: false,
     allowOverwrite: true,
+    // بدون هذا، Vercel يخزّن الملف مؤقتًا حتى 5 دقائق على مستوى الـ CDN —
+    // خطير لنمط "اقرأ-عدّل-اكتب" (قراءة تالية قد ترى نسخة قديمة فتفقد تعديلًا).
+    cacheControlMaxAge: 0,
   });
 }
 
