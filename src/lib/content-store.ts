@@ -1,4 +1,4 @@
-import { list, put, del } from "@vercel/blob";
+import { get, put, del } from "@vercel/blob";
 
 // اسم ملف الفهرس ثابت — يُستبدل محتواه بالكامل عند كل كتابة (put مع allowOverwrite).
 const INDEX_PATHNAME = "content-index.json";
@@ -76,20 +76,14 @@ export function validateItem(
   }
 }
 
-async function findIndexBlobUrl(): Promise<string | null> {
-  const { blobs } = await list({ prefix: INDEX_PATHNAME, limit: 1 });
-  const exact = blobs.find((b) => b.pathname === INDEX_PATHNAME);
-  return exact?.url ?? null;
-}
-
 export async function readContentIndex(): Promise<ContentItem[]> {
-  const url = await findIndexBlobUrl();
-  if (!url) return [];
-  // كسر تخزين Vercel CDN المؤقت صراحة (query param فريد) — نعتمد على هذا الملف
-  // في نمط "اقرأ-عدّل-اكتب" على كل طلب كتابة، فأي نسخة قديمة مخبأة تعني فقدان تعديل.
-  const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) return [];
-  return (await res.json()) as ContentItem[];
+  // useCache: false يقرأ مباشرة من التخزين الأصلي (origin) متجاوزًا تخزين
+  // CDN المؤقت — ضروري لنمط "اقرأ-عدّل-اكتب": أي نسخة قديمة مخبأة تعني فقدان
+  // تعديل سابق بصمت. (كسر التخزين عبر query param وحده لا يكفي — Vercel قد
+  // يخدم النسخة المخبأة رغمه.)
+  const result = await get(INDEX_PATHNAME, { access: "public", useCache: false });
+  if (!result || result.statusCode !== 200) return [];
+  return (await new Response(result.stream).json()) as ContentItem[];
 }
 
 export async function readActiveContentIndex(): Promise<ContentItem[]> {
