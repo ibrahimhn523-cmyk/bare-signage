@@ -173,6 +173,33 @@ export async function addContentItem(
   return item;
 }
 
+export type UpdatableFields = Partial<
+  Pick<ContentItem, "title" | "url" | "duration_seconds">
+>;
+
+// تعديل عنصر قائم (الاسم/الرابط/المدة). يحفظ نفس الـ id والترتيب وحالة التفعيل.
+export async function updateContentItem(
+  id: string,
+  patch: UpdatableFields,
+): Promise<ContentItem | null> {
+  const entries = await readEntries();
+  const target = entries.find((e) => e.item.id === id);
+  if (!target) return null;
+
+  const updated: ContentItem = { ...target.item, ...patch };
+  // نفس قواعد الإضافة تُطبّق على التعديل (قد ترمي ContentValidationError).
+  validateItem({
+    type: updated.type,
+    title: updated.title,
+    duration_seconds: updated.duration_seconds,
+  });
+
+  // حذف ثم إنشاء بنفس الترتيب — بلا overwrite (ملف جديد بـ nonce جديد).
+  await del(target.pathname);
+  await writeItemBlob(target.order, updated);
+  return updated;
+}
+
 export async function deleteContentItem(id: string): Promise<boolean> {
   const entries = await readEntries();
   const target = entries.find((e) => e.item.id === id);

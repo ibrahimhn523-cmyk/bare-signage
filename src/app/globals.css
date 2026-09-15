@@ -1,27 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8f7;
-  --foreground: #1d2421;
-  --border: #d8dcda;
-  --brand: #16a34a;
+  --background: #f3f5f8;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --border: #e5e9ef;
+  --primary: #1e293b; /* كحلي يوافق هوية بارع */
+  --primary-foreground: #ffffff;
+  --accent: #0d9488; /* أخضر مزرقّ للحالة المفعّلة/الشارات */
   --danger: #dc2626;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
   --color-border: var(--border);
-  --color-brand: var(--brand);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
   --color-danger: var(--danger);
   --font-sans: var(--font-cairo);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #101312;
-    --foreground: #e7efeb;
-    --border: #2a302d;
+    --background: #0b1120;
+    --surface: #111a2b;
+    --surface-2: #0f1728;
+    --foreground: #e6edf5;
+    --muted: #93a2b8;
+    --border: #22304a;
+    --primary: #e6edf5;
+    --primary-foreground: #0b1120;
+    --accent: #2dd4bf;
   }
 }
 

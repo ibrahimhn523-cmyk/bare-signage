@@ -5,15 +5,16 @@ import { useState, type FormEvent } from "react";
 import { upload } from "@vercel/blob/client";
 import { DEFAULT_DURATION_SECONDS, type ContentItemType } from "@/lib/content-store";
 
-const UPLOAD_TYPES: { value: "image" | "video"; label: string }[] = [
+const TYPES: { value: ContentItemType; label: string }[] = [
   { value: "image", label: "صورة" },
   { value: "video", label: "مقطع فيديو" },
+  { value: "external_video", label: "رابط فيديو" },
+  { value: "webpage", label: "صفحة ويب" },
 ];
 
-const LINK_TYPES: { value: "external_video" | "webpage"; label: string }[] = [
-  { value: "external_video", label: "رابط فيديو خارجي" },
-  { value: "webpage", label: "رابط صفحة ويب حية" },
-];
+const inputClass =
+  "w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm outline-none transition-colors focus:border-primary";
+const labelClass = "mb-1 block text-xs font-medium text-muted";
 
 export default function AddItemForm() {
   const router = useRouter();
@@ -30,6 +31,8 @@ export default function AddItemForm() {
     setSubmitting(true);
     const form = e.currentTarget;
     const formData = new FormData(form);
+    const rawTitle = formData.get("title");
+    const title = typeof rawTitle === "string" && rawTitle.trim() ? rawTitle.trim() : null;
 
     try {
       if (isUploadType) {
@@ -41,8 +44,7 @@ export default function AddItemForm() {
         }
 
         let uploadFile: File = file;
-        // تحويل HEIC/HEIF (شائع من رفع مباشر من آيفون) إلى JPEG قبل الرفع —
-        // لازم يكون داخل المتصفح لأن الرفع يذهب مباشرة لـ Blob بدون المرور بخادمنا.
+        // تحويل HEIC/HEIF (شائع من رفع مباشر من آيفون) إلى JPEG قبل الرفع.
         if (/\.hei[cf]$/i.test(file.name)) {
           const heic2any = (await import("heic2any")).default;
           const converted = (await heic2any({ blob: file, toType: "image/jpeg" })) as Blob;
@@ -60,14 +62,15 @@ export default function AddItemForm() {
           onUploadProgress: (event) => setProgress(event.percentage),
         });
 
-        const durationValue = formData.get("duration_seconds");
         await fetch("/api/content", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             type,
+            title,
             url: blob.url,
-            duration_seconds: type === "video" ? null : Number(durationValue),
+            duration_seconds:
+              type === "video" ? null : Number(formData.get("duration_seconds")),
           }),
         });
       } else {
@@ -76,7 +79,7 @@ export default function AddItemForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             type,
-            title: formData.get("title"),
+            title,
             url: formData.get("url"),
             duration_seconds: Number(formData.get("duration_seconds")),
           }),
@@ -94,84 +97,94 @@ export default function AddItemForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-border p-4">
-      <div className="flex flex-wrap gap-3">
-        {[...UPLOAD_TYPES, ...LINK_TYPES].map((opt) => (
-          <label key={opt.value} className="flex items-center gap-1.5 text-sm">
-            <input
-              type="radio"
-              name="type"
-              value={opt.value}
-              checked={type === opt.value}
-              onChange={() => setType(opt.value)}
-            />
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-2xl border border-border bg-surface p-5 shadow-sm"
+    >
+      {/* اختيار النوع — أزرار مقسّمة */}
+      <div className="grid grid-cols-4 gap-1.5 rounded-xl bg-surface-2 p-1">
+        {TYPES.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setType(opt.value)}
+            className={`rounded-lg px-2 py-2 text-xs font-medium transition-colors ${
+              type === opt.value
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted hover:bg-surface"
+            }`}
+          >
             {opt.label}
-          </label>
+          </button>
         ))}
       </div>
 
       {isUploadType ? (
-        <div className="space-y-1">
-          <label className="block text-sm">الملف</label>
-          <input
-            type="file"
-            name="file"
-            required
-            accept={type === "image" ? "image/*,.heic,.heif" : "video/*"}
-            className="block w-full text-sm"
-          />
-        </div>
-      ) : (
         <>
-          <div className="space-y-1">
-            <label className="block text-sm">الاسم</label>
+          <div>
+            <label className={labelClass}>الملف</label>
             <input
-              type="text"
-              name="title"
+              type="file"
+              name="file"
               required
-              className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
+              accept={type === "image" ? "image/*,.heic,.heif" : "video/*"}
+              className="block w-full text-sm text-muted file:me-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:opacity-90"
             />
           </div>
-          <div className="space-y-1">
-            <label className="block text-sm">الرابط</label>
-            <input
-              type="url"
-              name="url"
-              required
-              className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
-            />
+          <div>
+            <label className={labelClass}>الاسم (اختياري)</label>
+            <input type="text" name="title" placeholder="اسم للتمييز في القائمة" className={inputClass} />
+          </div>
+        </>
+      ) : (
+        <>
+          <div>
+            <label className={labelClass}>الاسم</label>
+            <input type="text" name="title" required className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>الرابط</label>
+            <input type="url" name="url" required dir="ltr" placeholder="https://…" className={inputClass} />
           </div>
         </>
       )}
 
       {type !== "video" && (
-        <div className="space-y-1">
-          <label className="block text-sm">مدة العرض (ثواني)</label>
+        <div>
+          <label className={labelClass}>مدة العرض (ثواني)</label>
           <input
             type="number"
             name="duration_seconds"
             min={1}
-            defaultValue={DEFAULT_DURATION_SECONDS[type]}
+            defaultValue={DEFAULT_DURATION_SECONDS[type as "image" | "external_video" | "webpage"]}
             required
-            className="w-32 rounded-md border border-border bg-transparent px-3 py-2 text-sm"
+            className={`${inputClass} w-28`}
           />
         </div>
       )}
 
       {progress !== null && (
-        <div className="h-2 w-full overflow-hidden rounded-full bg-border">
-          <div className="h-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+        <div className="space-y-1">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+            <div
+              className="h-full rounded-full bg-accent transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted">جارٍ الرفع… {Math.round(progress)}%</p>
         </div>
       )}
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+      )}
 
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+        className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {submitting ? "جارٍ الإضافة..." : "إضافة"}
+        {submitting ? "جارٍ الإضافة…" : "إضافة العنصر"}
       </button>
     </form>
   );
