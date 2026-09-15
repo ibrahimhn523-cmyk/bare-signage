@@ -10,9 +10,12 @@ export default function ContentItemView({
 }) {
   switch (item.type) {
     case "image":
+      // احتواء كامل (contain) — الصورة تظهر كاملة بلا قص، ولو نتج شريطان فارغان
+      // عند اختلاف النسبة. (انحراف واعٍ عن قرار CONTEXT الأصلي "cover"، موثّق في
+      // DECISIONS-0005 — السبب: قص الشعارات والنصوص كان يشوّهها.)
       return (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={item.url} alt="" className="h-full w-full object-cover" />
+        <img src={item.url} alt="" className="h-full w-full object-contain" />
       );
 
     case "video":
