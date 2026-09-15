@@ -17,8 +17,9 @@ export default async function ProtectedLayout({
       <header className="sticky top-0 z-10 border-b border-border bg-surface/80 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-              بارع
+            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white p-1 ring-1 ring-border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-mark.png" alt="بارع" className="h-full w-full object-contain" />
             </span>
             <h1 className="text-base font-semibold">إدارة شاشة العرض</h1>
           </div>

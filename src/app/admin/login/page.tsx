@@ -14,9 +14,10 @@ export default function LoginPage() {
         action={formAction}
         className="w-full max-w-sm space-y-5 rounded-2xl border border-border bg-surface p-7 shadow-sm"
       >
-        <div className="flex flex-col items-center gap-2 text-center">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-            بارع
+        <div className="flex flex-col items-center gap-3 text-center">
+          <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 ring-1 ring-border">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.png" alt="بارع" className="h-full w-full object-contain" />
           </span>
           <h1 className="text-base font-semibold">دخول لوحة إدارة شاشة العرض</h1>
         </div>
