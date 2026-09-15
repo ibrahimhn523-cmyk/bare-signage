@@ -54,11 +54,11 @@ export default function DisplayLoop({ initialItems }: { initialItems: ContentIte
   }, [current?.id]);
 
   if (!current) {
-    return <div className="h-dvh w-dvh bg-black" />;
+    return <div className="h-dvh w-screen bg-black" />;
   }
 
   return (
-    <div className="relative h-dvh w-dvh overflow-hidden bg-black">
+    <div className="relative h-dvh w-screen overflow-hidden bg-black">
       <div
         className="h-full w-full"
         style={{ transition: `opacity ${FADE_MS}ms ease`, opacity: visible ? 1 : 0 }}
